@@ -1,4 +1,4 @@
-# Système de gestion de base de donnée d'un distributeur de médicaments
+# Système de gestion de base de donnée de distributeurs de médicaments
 
 ## Intro
 Système mettant en oeuvre plusieurs distributeurs vendant des médicaments.
