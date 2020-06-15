@@ -146,6 +146,8 @@ WHERE medecins.specialite = 'Cardiologue' AND inclut.intitule_med = 'Valium'
 ```
 
 ## 4 vues
+
+1.Tous les individus
 ```sql
 CREATE VIEW individus
 AS SELECT *
@@ -155,12 +157,14 @@ SELECT prenom, nom, no_avs, canton
 FROM medecins
 ```
 
+2. Les totaux pour chaque médicament vendu 
 ```sql
 CREATE VIEW achat_totaux
 AS SELECT intitule_med, SUM(quantite) AS total FROM achats
 GROUP BY (intitule_med)
 ```
 
+Les achats de chaque client
 ```sql
 CREATE VIEW factures_client
 AS SELECT patients.prenom, patients.nom, patients.no_avs, assurances.nom AS nom_assurance,
@@ -173,6 +177,7 @@ AND achats.id_distributeur = contient.id_distributeur
 AND contient.no_CAS = achats.no_CAS AND contient.intitule_med = achats.intitule_med
 ```
 
+Toutes les ordonnances ayant aboutit à un achat
 ```sql
 CREATE VIEW ordonnances_achat
 SELECT inclut.id_ordonnance as id_ordonnance, patients.prenom, patients.nom, 
