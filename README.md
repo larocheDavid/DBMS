@@ -1,4 +1,14 @@
-## 15 commandes intéressantes
+# Système de gestion de base de donnée d'un distributeur de médicaments
+
+## Intro
+Système mettant en oeuvre plusieurs distributeurs vendant des médicaments.
+Des médicaments peuvent être acheté par des clients ayant une ordonnance d'un medecin autorisé.
+Les médicaments en vente libre n'ont pas besoin d'ordonnances.
+Les medicaments doivent être en stock afin de réaliser un achat.
+Ces distributeurs sont possédés par des entreprises.
+Des entreprises pharmaceutiques peuvent enregistrer des médicaments pouvant être ensuite vendu dans ces distributeurs.
+
+### 15 commandes intéressantes
 
 1. Tous les identifiants d’ordonnances de médicaments contenant du methylphénidate
 ```sql
@@ -145,7 +155,7 @@ INNER JOIN inclut ON ordonnances.id_ordonnance = inclut.id_ordonnance
 WHERE medecins.specialite = 'Cardiologue' AND inclut.intitule_med = 'Valium'
 ```
 
-## 4 vues
+###  4 vues
 
 1.Tous les individus
 ```sql
