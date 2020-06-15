@@ -1,12 +1,13 @@
 ## 15 commandes intéressantes
 
 1. Tous les identifiants d’ordonnances de médicaments contenant du methylphénidate
+```sql
 SELECT id_ordonnance
 FROM inclut
 INNER JOIN medicaments ON inclut.no_CAS = medicaments.no_CAS AND inclut.intitule_med = medicaments.intitule
 WHERE medicaments.DCI = 'Methylphenidate'
 GROUP BY id_ordonnance
-
+```
 2. Le nom des médicaments enregistrés contenant du methylphenidate et leur producteur
 SELECT intitule, nom_producteur
 FROM medicaments
