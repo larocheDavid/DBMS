@@ -40,7 +40,6 @@ mycursor.execute("SELECT MAX(id_ordonnance) FROM ordonnances")
 id_ordonnance = mycursor.fetchall()
 id_ordonnance = id_ordonnance[0][0] + 1
 
-
 query = "INSERT INTO ordonnances (date, no_medecin, no_patient, id_ordonnance) VALUES (%s, %s, %s, %s)"
 val = (date.today(), no_medecin, no_patient, id_ordonnance)
 mycursor.execute(query, val)

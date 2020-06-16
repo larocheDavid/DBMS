@@ -14,9 +14,9 @@ Des entreprises pharmaceutiques peuvent enregistrer des médicaments pouvant êt
 ```sql
 SELECT id_ordonnance
 FROM inclut
-INNER JOIN medicaments 
-ON inclut.no_CAS = medicaments.no_CAS AND inclut.intitule_med = medicaments.intitule
-WHERE medicaments.DCI = 'Methylphenidate'
+INNER JOIN medicaments ON inclut.intitule_med = medicaments.intitule
+INNER JOIN produits ON produits.DCI = medicaments.DCI and produits.nom_producteur = medicaments.nom_producteur
+WHERE produits.DCI = 'Methylphenidate'
 GROUP BY id_ordonnance
 ```
 2. Le nom des médicaments enregistrés contenant du methylphenidate et leur producteur
@@ -37,25 +37,25 @@ WHERE inclut.intitule_med = 'Valium'
 
 4. L'adresse des distributeurs contenant de l'aspirine
 ```sql
-SELECT adresse
+SELECT id_distributeur, adresse
 FROM distributeurs
 INNER JOIN contient ON distributeurs.id = contient.id_distributeur
 WHERE contient.intitule_med = 'Aspirin'
 ```
 
-5. Connaître toutes les ventes du distributeur 1 depuis depuis le 1er juin 2020
+5. Connaître toutes les ventes du distributeur 2 depuis depuis le 1er juin 2020
 ```sql
 SELECT *
 FROM achats
-WHERE achats.id_distributeur = 1 and achats.date >= '2020-06-01'
+WHERE achats.id_distributeur = 2 and achats.date >= '2020-06-01'
 ```
 
-6. Le chiffre d'affaires de la vente de tryptanol pour l'année 2020
+6. Le chiffre d'affaires de la vente de tryptanol pour l'année 2020 AJOUTER ENREGISRTEMENTS
 ```sql
 SELECT SUM(achats.quantite*prix) AS chiffre_affaire_tryptanol
 FROM achats
 INNER JOIN contient ON achats.id_distributeur = contient.id_distributeur 
-AND achats.intitule_med = contient.intitule_med AND achats.no_CAS = contient.no_CAS
+AND achats.intitule_med = contient.intitule_med 
 WHERE achats.intitule_med = 'Tryptanol' AND achats.date > '2020-01-01' 
 ```
 
@@ -157,7 +157,7 @@ WHERE medecins.specialite = 'Cardiologue' AND inclut.intitule_med = 'Valium'
 
 ###  4 vues
 
-1.Tous les individus
+1. Tous les individus
 ```sql
 CREATE VIEW individus
 AS SELECT *
@@ -177,25 +177,69 @@ GROUP BY (intitule_med)
 3. Les achats de chaque client
 ```sql
 CREATE VIEW factures_client
-AS SELECT patients.prenom, patients.nom, patients.no_avs, assurances.nom AS nom_assurance,
+AS SELECT patients.prenom, patients.nom, patients.no_avs, achats.date assurances.nom AS nom_assurance,
 achats.id_distributeur AS id_distributeur, achats.intitule_med, achats.quantite,
 contient.prix, achats.quantite*contient.prix AS total
-FROM patients
-INNER JOIN achats, assurances, contient
-WHERE achats.no_patient = patients.no_avs AND patients.no_assurance = assurances.no
-AND achats.id_distributeur = contient.id_distributeur
-AND contient.no_CAS = achats.no_CAS AND contient.intitule_med = achats.intitule_med
+FROM assurances
+INNER JOIN patients ON patients.no_assurance = assurances.no
+INNER JOIN achats ON achats.no_patient = patients.no_avs
+INNER JOIN distributeurs ON achats.id_distributeur = distributeurs.id
+INNER JOIN contient ON distributeurs.id = contient.id_distributeur
+WHERE contient.intitule_med = achats.intitule_med
 ```
 
 4. Toutes les ordonnances ayant aboutit à un achat
 ```sql
 CREATE VIEW ordonnances_achat
-SELECT inclut.id_ordonnance as id_ordonnance, patients.prenom, patients.nom, 
-medicaments.intitule, achats.date as date_achat
+AS SELECT DISTINCT inclut.id_ordonnance as id_ordonnance, patients.prenom, patients.nom, 
+medicaments.intitule
 FROM ordonnances
 INNER JOIN inclut ON ordonnances.id_ordonnance = inclut.id_ordonnance
-INNER JOIN medicaments ON medicaments.no_CAS = inclut.no_CAS and medicaments.intitule = inclut.intitule_med
-INNER JOIN achats ON  medicaments.no_CAS = achats.no_CAS and medicaments.intitule = achats.intitule_med
-INNER JOIN patients ON achats.no_patient = patients.no_avs and patients.no_avs = ordonnances.no_patient
+INNER JOIN medicaments ON medicaments.intitule = inclut.intitule_med
+INNER JOIN achats ON medicaments.intitule = achats.intitule_med
+INNER JOIN patients ON achats.no_patient = patients.no_avs AND patients.no_avs = ordonnances.no_patient
 WHERE ordonnances.date < achats.date
+```
+
+```sql
+Triggers achat
+CREATE TRIGGER `autorisation_achat` AFTER INSERT ON `achats`
+ FOR EACH ROW BEGIN
+DECLARE autorised bit;
+SET autorised = (SELECT autorisation 
+                 FROM produits
+                 INNER JOIN medicaments
+                 ON medicaments.DCI = produits.DCI
+                 WHERE medicaments.intitule = NEW.intitule_med);
+
+IF NOT EXISTS (SELECT *
+FROM ordonnances
+LEFT JOIN inclut ON ordonnances.id_ordonnance = inclut.id_ordonnance
+WHERE ordonnances.no_patient = NEW.no_patient and inclut.intitule_med = NEW.intitule_med) AND autorised THEN
+SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Medicament sous ordonnance';
+END IF;
+END
+```
+
+```sql
+CREATE TRIGGER `en_stock` AFTER INSERT ON `achats`
+ FOR EACH ROW BEGIN
+  DECLARE stock int;
+  SET stock = ( SELECT quantite FROM contient WHERE NEW.id_distributeur = contient.id_distributeur
+                    AND NEW.intitule_med = contient.intitule_med);
+
+IF (stock < NEW.quantite OR stock IS NULL) THEN
+SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Stock insuffisant';
+END IF;
+END
+```
+
+```sql
+CREATE TRIGGER `update_stock` AFTER INSERT ON `achats`
+ FOR EACH ROW UPDATE contient 
+     SET quantite = quantite - NEW.quantite
+   WHERE NEW.id_distributeur = contient.id_distributeur AND
+NEW.intitule_med = contient.intitule_med
 ```
