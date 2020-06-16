@@ -43,14 +43,14 @@ INNER JOIN contient ON distributeurs.id = contient.id_distributeur
 WHERE contient.intitule_med = 'Aspirin'
 ```
 
-5. Connaître toutes les ventes du distributeur 2 depuis depuis le 1er juin 2020
+5. Connaître toutes les ventes du distributeur 1 depuis depuis le 1er juin 2020
 ```sql
 SELECT *
 FROM achats
-WHERE achats.id_distributeur = 2 and achats.date >= '2020-06-01'
+WHERE achats.id_distributeur = 1 and achats.date >= '2020-06-01'
 ```
 
-6. Le chiffre d'affaires de la vente de tryptanol pour l'année 2020 AJOUTER ENREGISRTEMENTS
+6. Le chiffre d'affaires de la vente de tryptanol pour l'année 2020 
 ```sql
 SELECT SUM(achats.quantite*prix) AS chiffre_affaire_tryptanol
 FROM achats
@@ -59,46 +59,46 @@ AND achats.intitule_med = contient.intitule_med
 WHERE achats.intitule_med = 'Tryptanol' AND achats.date > '2020-01-01' 
 ```
 
-6. Le chiffre d'affaires de la vente d'Aspirin du distributeur n°1 pour l'année 2020
+7. Le chiffre d'affaires de la vente d'Aspirin du distributeur n°1 pour l'année 2020
 ```sql
 SELECT SUM(achats.quantite*prix) AS chiffre_affaire_distributeur
 FROM achats
 INNER JOIN contient ON achats.id_distributeur = contient.id_distributeur 
-AND achats.intitule_med = contient.intitule_med AND achats.no_CAS = contient.no_CAS
+AND achats.intitule_med = contient.intitule_med
 WHERE achats.intitule_med = 'Aspirin' AND achats.id_distributeur = 1 
 AND achats.date > '2020-01-01' AND achats.date < '2021-01-01'
 ```
 
-7. Le chiffre d'affaire de la société Amavita pour l'année 2020
+8. Le chiffre d'affaire de la société Amavita pour l'année 2020
 ```sql
 SELECT SUM(achats.quantite*prix) AS chiffre_affaire_societe
 FROM achats
 INNER JOIN contient ON achats.id_distributeur = contient.id_distributeur
+AND achats.intitule_med = contient.intitule_med
 INNER JOIN distributeurs ON contient.id_distributeur = distributeurs.id 
-AND achats.no_CAS = contient.no_CAS AND achats.intitule_med = contient.intitule_med
 WHERE achats.date > '2020-01-01' AND achats.date < '2021-01-01'
 AND distributeurs.nom_societe = 'Amavita'
 ```
 
-7. Le chiffre d'affaire de la société mère Galenica pour l'année 2020
+9. Le chiffre d'affaire de la société mère Galenica pour l'année 2020
 ```sql
-SELECT SUM(achats.quantite*prix) AS chiffre_affaire_societe
+SELECT DISTINCT SUM(achats.quantite*prix) AS chiffre_affaire_societe
 FROM achats
 INNER JOIN contient ON achats.id_distributeur = contient.id_distributeur
+AND achats.intitule_med = contient.intitule_med
 INNER JOIN distributeurs ON contient.id_distributeur = distributeurs.id 
-AND achats.no_CAS = contient.no_CAS AND achats.intitule_med = contient.intitule_med
 INNER JOIN societes_filles ON distributeurs.nom_societe = societes_filles.nom
 WHERE societes_filles.nom_mere = 'Galenica' 
 AND achats.date > '2020-01-01' AND achats.date < '2021-01-01'
 ```
 
-8. La quantité achetée totale pour chaque nom de médicament
+10. La quantité achetée totale pour chaque nom de médicament
 ```sql
 SELECT intitule_med, SUM(quantite) AS total FROM achats
 GROUP BY (intitule_med)
 ```
 
-10. La liste de tous les medecins ayant des patients assurés chez Assura
+11. La liste de tous les medecins ayant des patients assurés chez Assura
 ```sql
 SELECT medecins.prenom, medecins.nom, no_medecin
 FROM medecins
@@ -109,23 +109,23 @@ WHERE assurances.nom = 'Assura-Basis'
 GROUP BY(no_medecin)
 ```
 
-11. Tous les achats des clients assurés chez CSS
+12. Tous les achats des clients assurés chez CSS
 ```sql
-SELECT id_distributeur, no_CAS, intitule_med, no_patient, date, quantite FROM achats
+SELECT id_distributeur, intitule_med, no_patient, date, quantite FROM achats
 INNER JOIN patients ON achats.no_patient = patients.no_avs
 INNER JOIN assurances ON assurances.no = patients.no_assurance
 WHERE assurances.nom = 'CSS'
 ```
 
-12. Tous les distributeurs ayant un stock d'aspirin inférieur à 60
+13. Tous les distributeurs ayant un stock d'aspirin inférieur à 60
 ```sql
 SELECT distributeurs.id, distributeurs.adresse
 FROM distributeurs
 INNER JOIN contient ON contient.id_distributeur = distributeurs.id
-WHERE contient.DCI = 'Aspirine' AND contient.quantite < 60
+WHERE contient.intitule_med = 'Aspirin' AND contient.quantite < 60
 ```
 
-13. La liste des medecins et leur client ayant prescrit une ordonnance à un client du même canton
+14. La liste des medecins et leur client ayant prescrit une ordonnance à un client du même canton
 ```sql
 SELECT medecins.nom AS nom_medecin, medecins.prenom AS prenom_medecin, 
 medecins.no_avs AS avs_medecin, patients.nom AS nom_patient, 
@@ -136,7 +136,7 @@ INNER JOIN patients ON ordonnances.no_patient = patients.no_avs
 WHERE patients.canton = medecins.canton
 ```
 
-14. La liste des clients ayant effectué des achats hors de leur canton et le canton du distributeur étranger
+15. La liste des clients ayant effectué des achats hors de leur canton et le canton du distributeur étranger
 ```sql
 SELECT DISTINCT prenom, nom, patients.canton AS canton_patient, 
 distributeurs.canton AS distributeur_canton
@@ -146,7 +146,7 @@ INNER JOIN distributeurs ON distributeurs.id = achats.id_distributeur
 WHERE distributeurs.canton <> patients.canton
 ```
 
-15. La liste des cardiologues ayant prescrit du valium
+16. La liste des cardiologues ayant prescrit du valium
 ```sql
 SELECT DISTINCT medecins.prenom, medecins.nom, medecins.no_avs
 FROM medecins
@@ -177,7 +177,7 @@ GROUP BY (intitule_med)
 3. Les achats de chaque client
 ```sql
 CREATE VIEW factures_client
-AS SELECT patients.prenom, patients.nom, patients.no_avs, achats.date assurances.nom AS nom_assurance,
+AS SELECT patients.prenom, patients.nom, patients.no_avs, achats.date, assurances.nom AS nom_assurance,
 achats.id_distributeur AS id_distributeur, achats.intitule_med, achats.quantite,
 contient.prix, achats.quantite*contient.prix AS total
 FROM assurances
@@ -204,7 +204,7 @@ WHERE ordonnances.date < achats.date
 ```sql
 Triggers achat
 CREATE TRIGGER `autorisation_achat` AFTER INSERT ON `achats`
- FOR EACH ROW BEGIN
+FOR EACH ROW BEGIN
 DECLARE autorised bit;
 SET autorised = (SELECT autorisation 
                  FROM produits

@@ -28,7 +28,7 @@ no_CAS = input("no_CAS: ")
 intitule_med = input("intitule_med: ")
 quantite = int(input("quantite: "))
 
-query = "UPDATE contient SET quantite = (%s + contient.quantite) WHERE no_CAS = %s AND intitule_med = %s AND id_distributeur = %s"
+query = "UPDATE contient SET quantite = (%s + quantite) WHERE no_CAS = %s AND intitule_med = %s AND id_distributeur = %s"
 val = (quantite, no_CAS, intitule_med, id)
 
 mycursor.execute(query, val)
