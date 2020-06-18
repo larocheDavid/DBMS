@@ -212,7 +212,6 @@ WHERE ordonnances.date < achats.date
 Triggers
 CI l'achat est possible s'il est en vente libre, ou que le médicament demandant une autorisation a été prescrit au patient
 ```sql
-Triggers achat
 CREATE TRIGGER `autorisation_achat` AFTER INSERT ON `achats`
 FOR EACH ROW BEGIN
 DECLARE autorised bit;
