@@ -211,7 +211,7 @@ WHERE ordonnances.date < achats.date
 
 ### Triggers
 
-1. CI: l'achat est possible s'il est en vente libre, ou que le médicament demandant une autorisation a été prescrit au patient
+1. CI: Pour valider l'achat de médicaments sous ordonnance, une ordonnance incluant les médicaments en question doit être prescrite au patient. Cette transaction est ACID car ```sqlBEGIN``` garantit l'atomicité et ```sqlSIGNAL SQLSTATE``` placé en fin de code garantit que la transaction se fait totalement ou pas du tout (rollback).
 ```sql
 CREATE TRIGGER `autorisation_achat` AFTER INSERT ON `achats`
 FOR EACH ROW BEGIN
@@ -232,7 +232,7 @@ END IF;
 END
 ```
 
-2. CI: Interdit l'achat si le stock n'est pas suffisant
+2. CI: Annule l'achat d'un médicament si le stock n'est pas suffisant dans un distributeur pour la quantité demandée ou que ce dernier ne le contient pas. Cette transaction est ACID car ```sqlBEGIN``` garantit l'atomicité et ```sqlSIGNAL SQLSTATE``` placé en fin de code garantit que la transaction se fait totalement ou pas du tout (rollback).
 ```sql
 CREATE TRIGGER `en_stock` AFTER INSERT ON `achats`
  FOR EACH ROW BEGIN
@@ -247,20 +247,7 @@ END IF;
 END
 ```
 
-3. CI: Interdit à un medecin non autorisé de prescrire une ordonnance
-```sql
-CREATE TRIGGER `insert_autorisation` AFTER INSERT ON `ordonnances`
- FOR EACH ROW BEGIN
-  DECLARE autorised bit;
-  SET autorised = ( SELECT autorisation FROM medecins WHERE NEW.no_medecin = medecins.no_avs);
-
-IF autorised = 0 THEN
-SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'Doctor not allowed';
-END IF;
-END
-```
-4. Met à jour les stocks après un achat
+3. Met à jour les stocks après un achat
 ```sql
 CREATE TRIGGER `update_stock` AFTER INSERT ON `achats`
  FOR EACH ROW UPDATE contient 
