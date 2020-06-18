@@ -209,8 +209,9 @@ INNER JOIN patients ON achats.no_patient = patients.no_avs AND patients.no_avs =
 WHERE ordonnances.date < achats.date
 ```
 
-Triggers
-CI l'achat est possible s'il est en vente libre, ou que le médicament demandant une autorisation a été prescrit au patient
+### Triggers
+
+CI: l'achat est possible s'il est en vente libre, ou que le médicament demandant une autorisation a été prescrit au patient
 ```sql
 CREATE TRIGGER `autorisation_achat` AFTER INSERT ON `achats`
 FOR EACH ROW BEGIN
@@ -231,7 +232,7 @@ END IF;
 END
 ```
 
-CI Interdisant un achat si le stock n'est pas suffisant
+CI: Interdit l'achat si le stock n'est pas suffisant
 ```sql
 CREATE TRIGGER `en_stock` AFTER INSERT ON `achats`
  FOR EACH ROW BEGIN
@@ -246,7 +247,7 @@ END IF;
 END
 ```
 
-Trigger mettant à jour les stocks après un achat
+Met à jour les stocks après un achat
 ```sql
 CREATE TRIGGER `update_stock` AFTER INSERT ON `achats`
  FOR EACH ROW UPDATE contient 
