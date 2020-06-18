@@ -4,7 +4,7 @@ import pandas as pd
 def show_distributeur(id_distributeur):
     mycursor.execute("SELECT * FROM contient WHERE contient.id_distributeur = %s", (id_distributeur,))
     myresult = mycursor.fetchall()
-    df = pd.DataFrame(myresult, columns = ['no_CAS', 'intitule_med', 'id_distributeur', 'quantite', 'prix'])
+    df = pd.DataFrame(myresult, columns = [ 'intitule_med', 'id_distributeur', 'quantite', 'prix'])
     print('\n', df)
 
 cnx = mysql.connector.connect(user='root', password='test',
@@ -24,12 +24,11 @@ id = int(input("\nChoose id_distributeur:"))
 
 show_distributeur(id)
 
-no_CAS = input("no_CAS: ")
 intitule_med = input("intitule_med: ")
 quantite = int(input("quantite: "))
 
-query = "UPDATE contient SET quantite = (%s + quantite) WHERE no_CAS = %s AND intitule_med = %s AND id_distributeur = %s"
-val = (quantite, no_CAS, intitule_med, id)
+query = "UPDATE contient SET quantite = (%s + quantite) WHERE intitule_med = %s AND id_distributeur = %s"
+val = (quantite,  intitule_med, id)
 
 mycursor.execute(query, val)
 cnx.commit()

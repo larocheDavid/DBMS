@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : db
--- Généré le : mar. 16 juin 2020 à 07:33
+-- Généré le : jeu. 18 juin 2020 à 12:08
 -- Version du serveur :  8.0.19
 -- Version de PHP : 7.4.1
 
@@ -42,17 +42,20 @@ FROM achats
 INNER JOIN contient ON achats.id_distributeur = contient.id_distributeur AND achats.intitule_med = contient.intitule_med
 WHERE achats.id_distributeur = id_distributeur AND achats.date > date_debut AND achats.date < date_fin$$
 
-CREATE DEFINER=`root`@`%` PROCEDURE `chiffre_affaire_distributeur_produit` (IN `id_distributeur` INT, IN `date_debut` DATE, IN `date_fin` DATE, IN `intitule_med` VARCHAR(9))  NO SQL
-SELECT SUM(achats.quantite*prix) AS chiffre_affaire_distributeur
+CREATE DEFINER=`root`@`%` PROCEDURE `chiffre_affaire_distributeur_produit` (IN `id_distributeur` INT, IN `intitule_med` VARCHAR(9), IN `date_debut` DATE, IN `date_fin` DATE)  NO SQL
+SELECT achats.intitule_med, SUM(achats.quantite*prix) AS chiffre_affaire_distributeur
 FROM achats
 INNER JOIN contient ON achats.id_distributeur = contient.id_distributeur AND achats.intitule_med = contient.intitule_med
-WHERE achats.intitule_med = intitule_med AND achats.id_distributeur = id_distributeur AND achats.date > date_debut AND achats.date < date_fin$$
+WHERE achats.intitule_med = intitule_med AND achats.id_distributeur = id_distributeur AND achats.date > date_debut AND achats.date < date_fin
+GROUP BY achats.intitule_med$$
 
-CREATE DEFINER=`root`@`%` PROCEDURE `chiffre_affaire_produit` (IN `date_debut` DATE, IN `intule_med` VARCHAR(9), IN `date_fin` DATE)  NO SQL
-SELECT SUM(achats.quantite*prix) AS chiffre_affaire
+CREATE DEFINER=`root`@`%` PROCEDURE `chiffre_affaire_produit` (IN `intule_med` VARCHAR(9), IN `date_debut` DATE, IN `date_fin` DATE)  NO SQL
+SELECT achats.intitule_med, SUM(achats.quantite*prix) AS chiffre_affaire
 FROM achats
-INNER JOIN contient ON achats.id_distributeur = contient.id_distributeur AND achats.intitule_med = contient.intitule_med AND achats.no_CAS = contient.no_CAS
-WHERE achats.intitule_med = intule_med AND achats.date > date_debut AND achats.date < date_fin$$
+INNER JOIN distributeurs ON achats.id_distributeur = distributeurs.id
+INNER JOIN contient ON achats.intitule_med = contient.intitule_med
+WHERE achats.intitule_med = intule_med AND achats.date > date_debut AND achats.date < date_fin
+GROUP BY achats.intitule_med$$
 
 CREATE DEFINER=`root`@`%` PROCEDURE `chiffre_affaire_societe` (IN `nom_societe` VARCHAR(19), IN `date_debut` DATE, IN `date_fin` DATE)  NO SQL
 SELECT SUM(achats.quantite*prix) AS chiffre_affaire_societe
@@ -80,7 +83,8 @@ WHERE assurances.nom = nom_assurance
 GROUP BY(no_medecin)$$
 
 CREATE DEFINER=`root`@`%` PROCEDURE `ordonnance_medecin` (IN `no_medecin` VARCHAR(16))  NO SQL
-SELECT * FROM ordonnances
+SELECT no_medecin, ordonnances.id_ordonnance, no_patient, intitule_med, quantite FROM ordonnances
+LEFT JOIN inclut ON ordonnances.id_ordonnance = inclut.id_ordonnance 
 WHERE ordonnances.no_medecin = no_medecin$$
 
 CREATE DEFINER=`root`@`%` PROCEDURE `ordonnance_patient` (IN `no_patient` VARCHAR(16))  NO SQL
@@ -103,8 +107,8 @@ DELIMITER ;
 --
 
 CREATE TABLE `achats` (
-  `id_distributeur` int NOT NULL,
   `intitule_med` varchar(9) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `id_distributeur` int NOT NULL,
   `no_patient` varchar(16) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `date` datetime NOT NULL,
   `quantite` int NOT NULL
@@ -114,13 +118,10 @@ CREATE TABLE `achats` (
 -- Déchargement des données de la table `achats`
 --
 
-INSERT INTO `achats` (`id_distributeur`, `intitule_med`, `no_patient`, `date`, `quantite`) VALUES
-(1, 'Aspirin', '102.0337.1896.04', '2020-06-13 22:55:58', 10),
-(1, 'Aspirin', '306.1724.4972.76', '2020-06-13 22:55:58', 5),
-(1, 'Tryptanol', '104.4238.1230.70', '2020-06-02 20:11:27', 5),
-(1, 'Xanax', '104.4238.1230.70', '2020-06-13 22:55:58', 5),
-(3, 'Aspirin', '725.4625.1176.35', '2020-06-14 22:55:58', 10),
-(3, 'Tryptanol', '883.5381.5273.68', '2020-06-02 20:11:27', 5);
+INSERT INTO `achats` (`intitule_med`, `id_distributeur`, `no_patient`, `date`, `quantite`) VALUES
+('Aspirin', 1, '102.0337.1896.04', '2020-06-17 22:38:49', 10),
+('Aspirin', 1, '725.4625.1176.35', '2020-06-17 22:38:49', 10),
+('Tryptanol', 1, '104.4238.1230.70', '2020-06-17 23:01:03', 5);
 
 --
 -- Déclencheurs `achats`
@@ -219,16 +220,16 @@ CREATE TABLE `contient` (
 --
 
 INSERT INTO `contient` (`intitule_med`, `id_distributeur`, `quantite`, `prix`) VALUES
-('Aspirin', 1, 80, 3),
-('Tryptanol', 1, 52, 16),
-('Xanax', 1, 102, 12),
-('Aspirin', 2, 57, 3),
+('Aspirin', 1, 60, 3),
+('Aspirin', 2, 60, 3),
+('Aspirin', 3, 97, 3),
 ('Concerta', 2, 67, 13),
+('Dormicum', 4, 37, 8),
 ('Focalin', 2, 77, 18),
 ('Ritalin', 2, 57, 9),
-('Aspirin', 3, 97, 3),
+('Tryptanol', 1, 47, 16),
 ('Tryptanol', 3, 32, 16),
-('Dormicum', 4, 37, 8);
+('Xanax', 1, 102, 12);
 
 -- --------------------------------------------------------
 
@@ -254,6 +255,33 @@ INSERT INTO `distributeurs` (`id`, `adresse`, `nom_societe`, `canton`) VALUES
 (4, 'rue benedicte 6', 'Pharmacie Plus', 'NE'),
 (5, 'chemin de la faucille 12', 'Coop Vitality', 'VS'),
 (6, 'chemin de bellevue 3', 'Amavita', 'VD');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `fabrique`
+--
+
+CREATE TABLE `fabrique` (
+  `no_lot` int NOT NULL,
+  `nom_producteur` varchar(13) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `DCI` varchar(15) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Déchargement des données de la table `fabrique`
+--
+
+INSERT INTO `fabrique` (`no_lot`, `nom_producteur`, `DCI`) VALUES
+(1, 'Bayer', 'Aspirine'),
+(1, 'Janssen-Cilag', 'Methylphenidate'),
+(1, 'Novartis', 'Methylphenidate'),
+(1, 'Nycomed', 'Zolpidem'),
+(1, 'Obs', 'Amitriptyline'),
+(1, 'Pfizer', 'Alprazolam'),
+(1, 'Roche', 'Diazepam'),
+(1, 'Roche', 'Midazolam'),
+(1, 'Sanofi', 'Zolpidem');
 
 -- --------------------------------------------------------
 
@@ -298,7 +326,8 @@ INSERT INTO `inclut` (`id_ordonnance`, `intitule_med`, `quantite`) VALUES
 (3, 'Focalin', 5),
 (18, 'Valium', 2),
 (19, 'Tryptanol', 5),
-(19, 'Valium', 5);
+(19, 'Valium', 5),
+(24, 'Dormicum', 5);
 
 -- --------------------------------------------------------
 
@@ -351,26 +380,25 @@ INSERT INTO `medecins` (`prenom`, `nom`, `no_avs`, `canton`, `specialite`, `auto
 
 CREATE TABLE `medicaments` (
   `intitule` varchar(9) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-  `DCI` varchar(15) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
-  `nom_producteur` varchar(13) NOT NULL
+  `DCI` varchar(15) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Déchargement des données de la table `medicaments`
 --
 
-INSERT INTO `medicaments` (`intitule`, `DCI`, `nom_producteur`) VALUES
-('Xanax', 'Alprazolam', 'Pfizer'),
-('Tryptanol', 'Amitriptyline', 'Obs'),
-('Aspirin', 'Aspirine', 'Bayer'),
-('Valium', 'Diazepam', 'Roche'),
-('Concerta', 'Methylphenidate', 'Janssen-Cilag'),
-('Focalin', 'Methylphenidate', 'Novartis'),
-('Ritalin', 'Methylphenidate', 'Novartis'),
-('Dormicum', 'Midazolam', 'Roche'),
-('Ambien', 'Zolpidem', 'Sanofi'),
-('Hypnogen', 'Zolpidem', 'Nycomed'),
-('Stilnox', 'Zolpidem', 'Sanofi');
+INSERT INTO `medicaments` (`intitule`, `DCI`) VALUES
+('Xanax', 'Alprazolam'),
+('Tryptanol', 'Amitriptyline'),
+('Aspirin', 'Aspirine'),
+('Valium', 'Diazepam'),
+('Concerta', 'Methylphenidate'),
+('Focalin', 'Methylphenidate'),
+('Ritalin', 'Methylphenidate'),
+('Dormicum', 'Midazolam'),
+('Ambien', 'Zolpidem'),
+('Hypnogen', 'Zolpidem'),
+('Stilnox', 'Zolpidem');
 
 -- --------------------------------------------------------
 
@@ -395,7 +423,10 @@ INSERT INTO `ordonnances` (`date`, `no_medecin`, `no_patient`, `id_ordonnance`) 
 ('2020-06-05', '248.4121.6513.61', '311.6470.2621.49', 3),
 ('2020-06-05', '248.4121.6513.61', '311.6470.2621.49', 18),
 ('2020-06-05', '187.2108.2768.22', '883.5381.5273.68', 19),
-('2020-06-05', '080.6113.2973.54', '306.1724.4972.76', 21);
+('2020-06-05', '080.6113.2973.54', '306.1724.4972.76', 21),
+('2020-06-18', '037.3205.2348.53', '311.6470.2621.49', 22),
+('2020-06-18', '037.3205.2348.53', '029.6101.4070.60', 23),
+('2020-06-18', '037.3205.2348.53', '029.6101.4070.60', 24);
 
 --
 -- Déclencheurs `ordonnances`
@@ -424,6 +455,20 @@ CREATE TABLE `ordonnances_achat` (
 ,`prenom` varchar(11)
 ,`nom` varchar(12)
 ,`intitule` varchar(9)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Doublure de structure pour la vue `ordonnances_medicaments`
+-- (Voir ci-dessous la vue réelle)
+--
+CREATE TABLE `ordonnances_medicaments` (
+`no_medecin` varchar(16)
+,`no_patient` varchar(16)
+,`id_ordonnance` int
+,`intitule_med` varchar(9)
+,`quantite` int
 );
 
 -- --------------------------------------------------------
@@ -497,7 +542,6 @@ INSERT INTO `producteurs` (`nom`, `siege_social`) VALUES
 
 CREATE TABLE `produits` (
   `DCI` varchar(15) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-  `nom_producteur` varchar(13) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `autorisation` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -505,16 +549,14 @@ CREATE TABLE `produits` (
 -- Déchargement des données de la table `produits`
 --
 
-INSERT INTO `produits` (`DCI`, `nom_producteur`, `autorisation`) VALUES
-('Alprazolam', 'Pfizer', 1),
-('Amitriptyline', 'Obs', 1),
-('Aspirine', 'Bayer', 0),
-('Diazepam', 'Roche', 1),
-('Methylphenidate', 'Janssen-Cilag', 1),
-('Methylphenidate', 'Novartis', 1),
-('Midazolam', 'Roche', 1),
-('Zolpidem', 'Nycomed', 1),
-('Zolpidem', 'Sanofi', 1);
+INSERT INTO `produits` (`DCI`, `autorisation`) VALUES
+('Alprazolam', 1),
+('Amitriptyline', 1),
+('Aspirine', 0),
+('Diazepam', 1),
+('Methylphenidate', 1),
+('Midazolam', 1),
+('Zolpidem', 1);
 
 -- --------------------------------------------------------
 
@@ -594,6 +636,15 @@ DROP TABLE IF EXISTS `ordonnances_achat`;
 
 CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`%` SQL SECURITY DEFINER VIEW `ordonnances_achat`  AS  select distinct `inclut`.`id_ordonnance` AS `id_ordonnance`,`patients`.`prenom` AS `prenom`,`patients`.`nom` AS `nom`,`medicaments`.`intitule` AS `intitule` from ((((`ordonnances` join `inclut` on((`ordonnances`.`id_ordonnance` = `inclut`.`id_ordonnance`))) join `medicaments` on((`medicaments`.`intitule` = `inclut`.`intitule_med`))) join `achats` on((`medicaments`.`intitule` = `achats`.`intitule_med`))) join `patients` on(((`achats`.`no_patient` = `patients`.`no_avs`) and (`patients`.`no_avs` = `ordonnances`.`no_patient`)))) where (`ordonnances`.`date` < `achats`.`date`) ;
 
+-- --------------------------------------------------------
+
+--
+-- Structure de la vue `ordonnances_medicaments`
+--
+DROP TABLE IF EXISTS `ordonnances_medicaments`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`%` SQL SECURITY DEFINER VIEW `ordonnances_medicaments`  AS  select `ordonnances`.`no_medecin` AS `no_medecin`,`ordonnances`.`no_patient` AS `no_patient`,`ordonnances`.`id_ordonnance` AS `id_ordonnance`,`inclut`.`intitule_med` AS `intitule_med`,`inclut`.`quantite` AS `quantite` from (`ordonnances` join `inclut` on((`ordonnances`.`id_ordonnance` = `inclut`.`id_ordonnance`))) ;
+
 --
 -- Index pour les tables déchargées
 --
@@ -617,7 +668,7 @@ ALTER TABLE `assurances`
 -- Index pour la table `contient`
 --
 ALTER TABLE `contient`
-  ADD PRIMARY KEY (`intitule_med`,`id_distributeur`,`quantite`,`prix`),
+  ADD PRIMARY KEY (`intitule_med`,`id_distributeur`),
   ADD KEY `intitule_med` (`intitule_med`),
   ADD KEY `id_distributeur` (`id_distributeur`);
 
@@ -627,6 +678,14 @@ ALTER TABLE `contient`
 ALTER TABLE `distributeurs`
   ADD PRIMARY KEY (`id`),
   ADD KEY `nom_societe` (`nom_societe`);
+
+--
+-- Index pour la table `fabrique`
+--
+ALTER TABLE `fabrique`
+  ADD PRIMARY KEY (`no_lot`,`nom_producteur`,`DCI`),
+  ADD KEY `DCI` (`DCI`),
+  ADD KEY `nom_producteur` (`nom_producteur`);
 
 --
 -- Index pour la table `inclut`
@@ -645,8 +704,7 @@ ALTER TABLE `medecins`
 -- Index pour la table `medicaments`
 --
 ALTER TABLE `medicaments`
-  ADD PRIMARY KEY (`intitule`,`nom_producteur`),
-  ADD KEY `nom_producteur` (`nom_producteur`),
+  ADD PRIMARY KEY (`intitule`),
   ADD KEY `DCI` (`DCI`);
 
 --
@@ -674,8 +732,7 @@ ALTER TABLE `producteurs`
 -- Index pour la table `produits`
 --
 ALTER TABLE `produits`
-  ADD PRIMARY KEY (`DCI`,`nom_producteur`),
-  ADD KEY `nom_producteur` (`nom_producteur`);
+  ADD PRIMARY KEY (`DCI`);
 
 --
 -- Index pour la table `societes_filles`
@@ -698,7 +755,7 @@ ALTER TABLE `societes_meres`
 -- AUTO_INCREMENT pour la table `ordonnances`
 --
 ALTER TABLE `ordonnances`
-  MODIFY `id_ordonnance` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id_ordonnance` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- Contraintes pour les tables déchargées
@@ -708,9 +765,9 @@ ALTER TABLE `ordonnances`
 -- Contraintes pour la table `achats`
 --
 ALTER TABLE `achats`
-  ADD CONSTRAINT `achats_ibfk_1` FOREIGN KEY (`id_distributeur`) REFERENCES `contient` (`id_distributeur`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  ADD CONSTRAINT `achats_ibfk_1` FOREIGN KEY (`id_distributeur`) REFERENCES `distributeurs` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   ADD CONSTRAINT `achats_ibfk_4` FOREIGN KEY (`no_patient`) REFERENCES `patients` (`no_avs`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  ADD CONSTRAINT `achats_ibfk_5` FOREIGN KEY (`intitule_med`) REFERENCES `contient` (`intitule_med`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+  ADD CONSTRAINT `achats_ibfk_5` FOREIGN KEY (`intitule_med`) REFERENCES `medicaments` (`intitule`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
 -- Contraintes pour la table `contient`
@@ -726,6 +783,13 @@ ALTER TABLE `distributeurs`
   ADD CONSTRAINT `distributeurs_ibfk_1` FOREIGN KEY (`nom_societe`) REFERENCES `societes_filles` (`nom`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
+-- Contraintes pour la table `fabrique`
+--
+ALTER TABLE `fabrique`
+  ADD CONSTRAINT `fabrique_ibfk_1` FOREIGN KEY (`DCI`) REFERENCES `produits` (`DCI`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  ADD CONSTRAINT `fabrique_ibfk_2` FOREIGN KEY (`nom_producteur`) REFERENCES `producteurs` (`nom`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+--
 -- Contraintes pour la table `inclut`
 --
 ALTER TABLE `inclut`
@@ -736,7 +800,6 @@ ALTER TABLE `inclut`
 -- Contraintes pour la table `medicaments`
 --
 ALTER TABLE `medicaments`
-  ADD CONSTRAINT `medicaments_ibfk_1` FOREIGN KEY (`nom_producteur`) REFERENCES `produits` (`nom_producteur`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   ADD CONSTRAINT `medicaments_ibfk_2` FOREIGN KEY (`DCI`) REFERENCES `produits` (`DCI`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
@@ -751,12 +814,6 @@ ALTER TABLE `ordonnances`
 --
 ALTER TABLE `patients`
   ADD CONSTRAINT `patients_ibfk_1` FOREIGN KEY (`no_assurance`) REFERENCES `assurances` (`no`) ON DELETE RESTRICT ON UPDATE RESTRICT;
-
---
--- Contraintes pour la table `produits`
---
-ALTER TABLE `produits`
-  ADD CONSTRAINT `produits_ibfk_1` FOREIGN KEY (`nom_producteur`) REFERENCES `producteurs` (`nom`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
 -- Contraintes pour la table `societes_filles`

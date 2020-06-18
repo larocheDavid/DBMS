@@ -15,14 +15,15 @@ Des entreprises pharmaceutiques peuvent enregistrer des médicaments pouvant êt
 SELECT id_ordonnance
 FROM inclut
 INNER JOIN medicaments ON inclut.intitule_med = medicaments.intitule
-INNER JOIN produits ON produits.DCI = medicaments.DCI and produits.nom_producteur = medicaments.nom_producteur
-WHERE produits.DCI = 'Methylphenidate'
+WHERE medicaments.DCI = 'Methylphenidate'
 GROUP BY id_ordonnance
 ```
+
 2. Le nom des médicaments enregistrés contenant du methylphenidate et leur producteur
 ```sql
 SELECT intitule, nom_producteur
 FROM medicaments
+INNER JOIN fabrique ON medicaments.DCI = fabrique.DCI
 WHERE medicaments.DCI = 'Methylphenidate'
 ```
 
@@ -188,7 +189,14 @@ INNER JOIN contient ON distributeurs.id = contient.id_distributeur
 WHERE contient.intitule_med = achats.intitule_med
 ```
 
-4. Toutes les ordonnances ayant aboutit à un achat
+4. Les ordonnances et les médicaments incluts
+```sql
+CREATE VIEW ordonnances_medicaments
+AS SELECT no_medecin, no_patient, ordonnances.id_ordonnance, inclut.intitule_med, quantite
+FROM ordonnances
+INNER JOIN inclut ON ordonnances.id_ordonnance = inclut.id_ordonnance
+
+5. Toutes les ordonnances ayant aboutit à un achat
 ```sql
 CREATE VIEW ordonnances_achat
 AS SELECT DISTINCT inclut.id_ordonnance as id_ordonnance, patients.prenom, patients.nom, 
@@ -201,6 +209,8 @@ INNER JOIN patients ON achats.no_patient = patients.no_avs AND patients.no_avs =
 WHERE ordonnances.date < achats.date
 ```
 
+Triggers
+CI l'achat est possible s'il est en vente libre, ou que le médicament demandant une autorisation a été prescrit au patient
 ```sql
 Triggers achat
 CREATE TRIGGER `autorisation_achat` AFTER INSERT ON `achats`
@@ -222,6 +232,7 @@ END IF;
 END
 ```
 
+CI Interdisant un achat si le stock n'est pas suffisant
 ```sql
 CREATE TRIGGER `en_stock` AFTER INSERT ON `achats`
  FOR EACH ROW BEGIN
@@ -236,6 +247,7 @@ END IF;
 END
 ```
 
+Trigger mettant à jour les stocks après un achat
 ```sql
 CREATE TRIGGER `update_stock` AFTER INSERT ON `achats`
  FOR EACH ROW UPDATE contient 

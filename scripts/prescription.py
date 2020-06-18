@@ -4,16 +4,16 @@ from datetime import date
 
 def show_meds():
     print("\n Table medicaments")
-    mycursor.execute("SELECT no_CAS, intitule, DCI FROM medicaments")
+    mycursor.execute("SELECT intitule, DCI FROM medicaments")
     myresult = mycursor.fetchall()
-    df = pd.DataFrame(myresult, columns = ['no_CAS', 'intitule', 'DCI'])
+    df = pd.DataFrame(myresult, columns = ['intitule', 'DCI'])
     print(df)
 
 def show_ordonnance(id_ordonnance):
     print("\n Ordonnance n°", id_ordonnance)
-    mycursor.execute("SELECT no_medecin, no_patient, no_CAS, intitule_med, quantite FROM ordonnances INNER JOIN inclut WHERE ordonnances.id_ordonnance = inclut.id_ordonnance AND inclut.id_ordonnance = %s", (id_ordonnance,))
+    mycursor.execute("SELECT no_medecin, no_patient, intitule_med, quantite FROM ordonnances INNER JOIN inclut WHERE ordonnances.id_ordonnance = inclut.id_ordonnance AND inclut.id_ordonnance = %s", (id_ordonnance,))
     myresult = mycursor.fetchall()
-    df = pd.DataFrame(myresult, columns = ['no_medecin', 'no_patient', 'no_CAS', 'intitule_med', 'quantite'])
+    df = pd.DataFrame(myresult, columns = ['no_medecin', 'no_patient', 'intitule_med', 'quantite'])
     print(df)
 
 cnx = mysql.connector.connect(user='root', password='test',
@@ -50,11 +50,10 @@ show_meds()
 
 finished = 0
 while finished != 'y':
-    no_CAS = input("no_CAS: ")
     intitule_med = input("intitule_med: ")
     quantite = int(input("quantite: "))
-    query = "INSERT INTO inclut (id_ordonnance, no_CAS, intitule_med, quantite) VALUES (%s, %s, %s, %s)"
-    val = (id_ordonnance, no_CAS, intitule_med, quantite)
+    query = "INSERT INTO inclut (id_ordonnance,  intitule_med, quantite) VALUES (%s, %s, %s)"
+    val = (id_ordonnance, intitule_med, quantite)
     mycursor.execute(query, val)
     finished = input("Finished? (y/n)")
 
