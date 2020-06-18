@@ -8,7 +8,7 @@ Les medicaments doivent être en stock afin de réaliser un achat.
 Ces distributeurs sont possédés par des entreprises.
 Des entreprises pharmaceutiques peuvent enregistrer des médicaments pouvant être ensuite vendu dans ces distributeurs.
 
-### 15 commandes intéressantes
+### 16 commandes intéressantes
 
 1. Tous les identifiants d’ordonnances de médicaments contenant du methylphénidate
 ```sql
@@ -156,7 +156,7 @@ INNER JOIN inclut ON ordonnances.id_ordonnance = inclut.id_ordonnance
 WHERE medecins.specialite = 'Cardiologue' AND inclut.intitule_med = 'Valium'
 ```
 
-###  4 vues
+###  5 vues
 
 1. Tous les individus
 ```sql
@@ -189,7 +189,7 @@ INNER JOIN contient ON distributeurs.id = contient.id_distributeur
 WHERE contient.intitule_med = achats.intitule_med
 ```
 
-4. Les ordonnances et les médicaments incluts
+4. Les ordonnances et leurs médicaments inclus
 ```sql
 CREATE VIEW ordonnances_medicaments
 AS SELECT no_medecin, no_patient, ordonnances.id_ordonnance, inclut.intitule_med, quantite
