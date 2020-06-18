@@ -195,7 +195,7 @@ CREATE VIEW ordonnances_medicaments
 AS SELECT no_medecin, no_patient, ordonnances.id_ordonnance, inclut.intitule_med, quantite
 FROM ordonnances
 INNER JOIN inclut ON ordonnances.id_ordonnance = inclut.id_ordonnance
-
+```
 5. Toutes les ordonnances ayant aboutit à un achat
 ```sql
 CREATE VIEW ordonnances_achat
