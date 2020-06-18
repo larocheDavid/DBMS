@@ -211,7 +211,7 @@ WHERE ordonnances.date < achats.date
 
 ### Triggers
 
-1. CI: Pour valider l'achat de médicaments sous ordonnance, une ordonnance incluant les médicaments en question doit être prescrite au patient. Cette transaction est ACID car ```sqlBEGIN``` garantit l'atomicité et ```sqlSIGNAL SQLSTATE``` placé en fin de code garantit que la transaction se fait totalement ou pas du tout (rollback).
+1. CI: Pour valider l'achat de médicaments sous ordonnance, une ordonnance incluant les médicaments en question doit être prescrite au patient. Cette transaction est ACID car `BEGIN` garantit l'atomicité et `SIGNAL SQLSTATE` placé en fin de code garantit que la transaction se fait totalement ou pas du tout (rollback).
 ```sql
 CREATE TRIGGER `autorisation_achat` AFTER INSERT ON `achats`
 FOR EACH ROW BEGIN
@@ -232,7 +232,7 @@ END IF;
 END
 ```
 
-2. CI: Annule l'achat d'un médicament si le stock n'est pas suffisant dans un distributeur pour la quantité demandée ou que ce dernier ne le contient pas. Cette transaction est ACID car ```sqlBEGIN``` garantit l'atomicité et ```sqlSIGNAL SQLSTATE``` placé en fin de code garantit que la transaction se fait totalement ou pas du tout (rollback).
+2. CI: Annule l'achat d'un médicament si le stock n'est pas suffisant dans un distributeur pour la quantité demandée ou que ce dernier ne le contient pas. Cette transaction est ACID car `BEGIN` garantit l'atomicité et `SIGNAL SQLSTATE` placé en fin de code garantit que la transaction se fait totalement ou pas du tout (rollback).
 ```sql
 CREATE TRIGGER `en_stock` AFTER INSERT ON `achats`
  FOR EACH ROW BEGIN
