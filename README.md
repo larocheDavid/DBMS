@@ -1,6 +1,6 @@
 # Système de gestion de base de donnée de distributeurs de médicaments
 
-## Intro
+## Description
 Système mettant en oeuvre plusieurs distributeurs vendant des médicaments.
 Des médicaments peuvent être acheté par des clients ayant une ordonnance d'un medecin autorisé.
 Les médicaments en vente libre n'ont pas besoin d'ordonnances.
