@@ -28,7 +28,7 @@ services:
         build: .
         network_mode: "host"
         stdin_open: true
-        tty: true 
-
+        tty: true
+        
 volumes:
     persistent:
