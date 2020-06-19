@@ -24,7 +24,7 @@ mycursor = cnx.cursor(buffered=True)
 print("Table medecins:")
 mycursor.execute("SELECT * FROM medecins")
 myresult = mycursor.fetchall()
-df = pd.DataFrame(myresult, columns = ['prenom', 'nom', 'no_avs', 'canton', 'specialite', 'autorisation'])
+df = pd.DataFrame(myresult, columns = ['prenom', 'nom', 'no_avs', 'canton', 'specialite'])
 print(df)
 
 no_medecin = input("Choose no_avs of doctor:")

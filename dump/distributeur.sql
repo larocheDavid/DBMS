@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : db
--- Généré le : jeu. 18 juin 2020 à 12:08
+-- Généré le : ven. 19 juin 2020 à 01:04
 -- Version du serveur :  8.0.19
 -- Version de PHP : 7.4.1
 
@@ -37,6 +37,7 @@ SELECT * FROM achats
 WHERE no_patient = achats.no_patient$$
 
 CREATE DEFINER=`root`@`%` PROCEDURE `chiffre_affaire_distributeur` (IN `id_distributeur` INT, IN `date_debut` DATE, IN `date_fin` DATE)  NO SQL
+    SQL SECURITY INVOKER
 SELECT SUM(achats.quantite*prix) AS chiffre_affaire_distributeur
 FROM achats
 INNER JOIN contient ON achats.id_distributeur = contient.id_distributeur AND achats.intitule_med = contient.intitule_med
@@ -58,6 +59,7 @@ WHERE achats.intitule_med = intule_med AND achats.date > date_debut AND achats.d
 GROUP BY achats.intitule_med$$
 
 CREATE DEFINER=`root`@`%` PROCEDURE `chiffre_affaire_societe` (IN `nom_societe` VARCHAR(19), IN `date_debut` DATE, IN `date_fin` DATE)  NO SQL
+    SQL SECURITY INVOKER
 SELECT SUM(achats.quantite*prix) AS chiffre_affaire_societe
 FROM achats
 INNER JOIN contient ON achats.id_distributeur = contient.id_distributeur
@@ -221,7 +223,7 @@ CREATE TABLE `contient` (
 
 INSERT INTO `contient` (`intitule_med`, `id_distributeur`, `quantite`, `prix`) VALUES
 ('Aspirin', 1, 60, 3),
-('Aspirin', 2, 60, 3),
+('Aspirin', 2, 68, 3),
 ('Aspirin', 3, 97, 3),
 ('Concerta', 2, 67, 13),
 ('Dormicum', 4, 37, 8),
@@ -327,7 +329,11 @@ INSERT INTO `inclut` (`id_ordonnance`, `intitule_med`, `quantite`) VALUES
 (18, 'Valium', 2),
 (19, 'Tryptanol', 5),
 (19, 'Valium', 5),
-(24, 'Dormicum', 5);
+(24, 'Dormicum', 5),
+(25, 'Ambien', 3),
+(25, 'Concerta', 2),
+(26, 'Hypnogen', 2),
+(26, 'Valium', 2);
 
 -- --------------------------------------------------------
 
@@ -353,24 +359,23 @@ CREATE TABLE `medecins` (
   `nom` varchar(9) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
   `no_avs` varchar(16) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `canton` varchar(2) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
-  `specialite` varchar(12) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
-  `autorisation` tinyint(1) DEFAULT NULL
+  `specialite` varchar(12) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Déchargement des données de la table `medecins`
 --
 
-INSERT INTO `medecins` (`prenom`, `nom`, `no_avs`, `canton`, `specialite`, `autorisation`) VALUES
-('Sid', 'Whinney', '037.3205.2348.53', 'NE', 'Interniste', 1),
-('Megan', 'Frow', '072.7352.7867.27', 'NE', 'Pneumologue', 1),
-('Gerhardine', 'Perrie', '080.6113.2973.54', 'NE', 'Generaliste', 1),
-('Borg', 'McCullagh', '187.2108.2768.22', 'NE', 'Cardiologue', 0),
-('Marianna', 'Beagles', '248.4121.6513.61', 'VD', 'Cardiologue', 1),
-('Phebe', 'Dugood', '256.5437.1392.48', 'VS', 'Generaliste', 1),
-('Benjamin', 'Leglise', '489.8137.5484.12', 'VS', 'Dermatologue', 1),
-('Rebecca', 'Gillott', '543.4141.0118.64', 'NE', 'Generaliste', 1),
-('Tod', 'Mebs', '868.9850.7281.95', 'VS', 'Generaliste', 1);
+INSERT INTO `medecins` (`prenom`, `nom`, `no_avs`, `canton`, `specialite`) VALUES
+('Sid', 'Whinney', '037.3205.2348.53', 'NE', 'Interniste'),
+('Megan', 'Frow', '072.7352.7867.27', 'NE', 'Pneumologue'),
+('Gerhardine', 'Perrie', '080.6113.2973.54', 'NE', 'Generaliste'),
+('Borg', 'McCullagh', '187.2108.2768.22', 'NE', 'Cardiologue'),
+('Marianna', 'Beagles', '248.4121.6513.61', 'VD', 'Cardiologue'),
+('Phebe', 'Dugood', '256.5437.1392.48', 'VS', 'Generaliste'),
+('Benjamin', 'Leglise', '489.8137.5484.12', 'VS', 'Dermatologue'),
+('Rebecca', 'Gillott', '543.4141.0118.64', 'NE', 'Generaliste'),
+('Tod', 'Mebs', '868.9850.7281.95', 'VS', 'Generaliste');
 
 -- --------------------------------------------------------
 
@@ -426,23 +431,9 @@ INSERT INTO `ordonnances` (`date`, `no_medecin`, `no_patient`, `id_ordonnance`) 
 ('2020-06-05', '080.6113.2973.54', '306.1724.4972.76', 21),
 ('2020-06-18', '037.3205.2348.53', '311.6470.2621.49', 22),
 ('2020-06-18', '037.3205.2348.53', '029.6101.4070.60', 23),
-('2020-06-18', '037.3205.2348.53', '029.6101.4070.60', 24);
-
---
--- Déclencheurs `ordonnances`
---
-DELIMITER $$
-CREATE TRIGGER `insert_autorisation` AFTER INSERT ON `ordonnances` FOR EACH ROW BEGIN
-  DECLARE autorised bit;
-  SET autorised = ( SELECT autorisation FROM medecins WHERE NEW.no_medecin = medecins.no_avs);
-
-IF autorised = 0 THEN
-SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'Doctor not allowed';
-END IF;
-END
-$$
-DELIMITER ;
+('2020-06-18', '037.3205.2348.53', '029.6101.4070.60', 24),
+('2020-06-18', '248.4121.6513.61', '943.3593.0144.39', 25),
+('2020-06-18', '256.5437.1392.48', '964.7809.5071.13', 26);
 
 -- --------------------------------------------------------
 
@@ -755,7 +746,7 @@ ALTER TABLE `societes_meres`
 -- AUTO_INCREMENT pour la table `ordonnances`
 --
 ALTER TABLE `ordonnances`
-  MODIFY `id_ordonnance` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id_ordonnance` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- Contraintes pour les tables déchargées
