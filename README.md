@@ -1,6 +1,6 @@
 # Système de gestion de base de donnée de distributeurs de médicaments
 
-## Intro
+## Description
 Système mettant en oeuvre plusieurs distributeurs vendant des médicaments.
 Des médicaments peuvent être acheté par des clients ayant une ordonnance d'un medecin autorisé.
 Les médicaments en vente libre n'ont pas besoin d'ordonnances.
@@ -8,7 +8,7 @@ Les medicaments doivent être en stock afin de réaliser un achat.
 Ces distributeurs sont possédés par des entreprises.
 Des entreprises pharmaceutiques peuvent enregistrer des médicaments pouvant être ensuite vendu dans ces distributeurs.
 
-### 15 commandes intéressantes
+### 16 commandes intéressantes
 
 1. Tous les identifiants d’ordonnances de médicaments contenant du methylphénidate
 ```sql
@@ -156,7 +156,7 @@ INNER JOIN inclut ON ordonnances.id_ordonnance = inclut.id_ordonnance
 WHERE medecins.specialite = 'Cardiologue' AND inclut.intitule_med = 'Valium'
 ```
 
-###  4 vues
+###  5 vues
 
 1. Tous les individus
 ```sql
@@ -189,13 +189,13 @@ INNER JOIN contient ON distributeurs.id = contient.id_distributeur
 WHERE contient.intitule_med = achats.intitule_med
 ```
 
-4. Les ordonnances et les médicaments incluts
+4. Les ordonnances et leurs médicaments inclus
 ```sql
 CREATE VIEW ordonnances_medicaments
 AS SELECT no_medecin, no_patient, ordonnances.id_ordonnance, inclut.intitule_med, quantite
 FROM ordonnances
 INNER JOIN inclut ON ordonnances.id_ordonnance = inclut.id_ordonnance
-
+```
 5. Toutes les ordonnances ayant aboutit à un achat
 ```sql
 CREATE VIEW ordonnances_achat
@@ -209,10 +209,10 @@ INNER JOIN patients ON achats.no_patient = patients.no_avs AND patients.no_avs =
 WHERE ordonnances.date < achats.date
 ```
 
-Triggers
-CI l'achat est possible s'il est en vente libre, ou que le médicament demandant une autorisation a été prescrit au patient
+### Triggers
+
+1. CI: Pour valider l'achat de médicaments sous ordonnance, une ordonnance incluant les médicaments en question doit être prescrite au patient. Cette transaction est ACID car `BEGIN` garantit l'atomicité et `SIGNAL SQLSTATE` placé en fin de code garantit que la transaction se fait totalement ou pas du tout (rollback).
 ```sql
-Triggers achat
 CREATE TRIGGER `autorisation_achat` AFTER INSERT ON `achats`
 FOR EACH ROW BEGIN
 DECLARE autorised bit;
@@ -232,7 +232,7 @@ END IF;
 END
 ```
 
-CI Interdisant un achat si le stock n'est pas suffisant
+2. CI: Annule l'achat d'un médicament si le stock n'est pas suffisant dans un distributeur pour la quantité demandée ou que ce dernier ne le contient pas. Cette transaction est ACID car `BEGIN` garantit l'atomicité et `SIGNAL SQLSTATE` placé en fin de code garantit que la transaction se fait totalement ou pas du tout (rollback).
 ```sql
 CREATE TRIGGER `en_stock` AFTER INSERT ON `achats`
  FOR EACH ROW BEGIN
@@ -247,7 +247,7 @@ END IF;
 END
 ```
 
-Trigger mettant à jour les stocks après un achat
+3. Met à jour les stocks après un achat
 ```sql
 CREATE TRIGGER `update_stock` AFTER INSERT ON `achats`
  FOR EACH ROW UPDATE contient 
