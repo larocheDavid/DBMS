@@ -1,6 +1,7 @@
 import mysql.connector
 import pandas as pd
 from datetime import date
+import time
 
 def show_meds():
     print("\n Table medicaments")
@@ -16,8 +17,7 @@ def show_ordonnance(id_ordonnance):
     df = pd.DataFrame(myresult, columns = ['no_medecin', 'no_patient', 'intitule_med', 'quantite'])
     print(df)
 
-cnx = mysql.connector.connect(user='root', password='test',
-                              host='localhost',port='3308', database='distributeur')
+cnx = mysql.connector.connect(user='root', password='test', host='127.0.0.1', database='distributeur')
 
 
 mycursor = cnx.cursor(buffered=True)

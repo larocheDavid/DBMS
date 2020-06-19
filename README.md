@@ -8,6 +8,13 @@ Les medicaments doivent être en stock afin de réaliser un achat.
 Ces distributeurs sont possédés par des entreprises.
 Des entreprises pharmaceutiques peuvent enregistrer des médicaments pouvant être ensuite vendu dans ces distributeurs.
 
+## Application
+Après avoir tiré le dossier git allez dans la racine et lancez `sudo docker-compose up`.
+Docker va construire les containers dont un avec une interface python avec les modules mysql connector et pandas.
+Connectez vous avec un terminal à ce dernier avec la commande `sudo docker exec -it sbd_python_env_1 bash`
+Ainsi vous pouvez executer les divers scripts avec la commande `python`.
+
+
 ### 16 commandes intéressantes
 
 1. Tous les identifiants d’ordonnances de médicaments contenant du methylphénidate
